@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Pro Chatbot</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3C/svg%3E" />
+
+  <!-- Markdown + Syntax highlight (tiny, CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark-dimmed.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+  <script>
+    // Configure marked once
+    marked.setOptions({
+      gfm: true,
+      breaks: true,
+      highlight: (code, lang) => {
+        try { return hljs.highlight(code, { language: lang }).value; }
+        catch { return hljs.highlightAuto(code).value; }
+      }
+    });
+  </script>
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🤖</div>
+      <div class="brand-txt">
+        <strong>Pro Chatbot</strong>
+        <span class="sub">AI assistant • Files • Converters</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="select-wrap">
+        <label for="provider" class="sr-only">Model</label>
+        <select id="provider" class="select">
+          <option value="openai">OpenAI</option>
+          <option value="gemini">Gemini</option>
+        </select>
+      </div>
+
+      <button id="export-chat" class="btn ghost" type="button" title="Export chat">Export</button>
+
+      <button id="theme-toggle" class="btn ghost" type="button" title="Toggle theme" aria-label="Toggle theme">
+        <span class="theme-dark" aria-hidden="true">🌙</span>
+        <span class="theme-light" aria-hidden="true">☀️</span>
+      </button>
+      <button id="clear" class="btn danger" type="button" title="Clear chat">Clear</button>
+    </div>
+  </header>
+
+  <main class="grid" role="main">
+    <!-- Chat pane -->
+    <section class="panel chat-panel" aria-label="Chat">
+      <div id="chat-body" class="chat-body" aria-live="polite" aria-atomic="false"></div>
+
+      <!-- chips for chat attachments -->
+      <div id="chat-file-chips" class="chips" aria-live="polite"></div>
+
+      <!-- Composer -->
+      <div class="composer">
+        <button id="attach" class="btn ghost" type="button" title="Attach files" aria-label="Attach files">📎</button>
+        <input
+          id="chat-files"
+          class="sr-only"
+          type="file"
+          multiple
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.md"
+          aria-hidden="true"
+          tabindex="-1"
+        />
+        <textarea
+          id="user-input"
+          class="input"
+          placeholder="Ask anything… (Enter to send, Shift+Enter for newline)"
+          rows="1"
+          autocomplete="off"
+          autocapitalize="sentences"
+          spellcheck="true"
+        ></textarea>
+        <button id="send-button" class="btn primary" type="button" title="Send">Send ➤</button>
+      </div>
+    </section>
+
+    <!-- Side pane -->
+    <aside class="panel side-panel" aria-label="Tools">
+      <div class="card">
+        <div class="card-head">
+          <h3>Analyze Files</h3>
+          <span class="hint">PDF, DOCX, XLSX, CSV, PNG, JPG</span>
+        </div>
+
+        <form id="analyze-form" class="analyze-form" novalidate>
+          <div id="drop" class="dropzone" tabindex="0" role="button" aria-label="Drop files or click to upload">
+            <input type="file" id="files" name="files" multiple />
+            <div class="dz-inner">
+              <div class="dz-icon" aria-hidden="true">📎</div>
+              <p>Drop files here or <span class="link">browse</span></p>
+              <small>Max 10 files</small>
+            </div>
+          </div>
+
+          <div id="file-chips" class="chips" aria-live="polite"></div>
+
+          <div class="row">
+            <input type="text" id="question" class="input" placeholder="What should I do? e.g., Summarize key points" autocomplete="off" />
+            <button type="submit" class="btn">Analyze</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="tabs" role="tablist" aria-label="Converters">
+          <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-pdf2docx" data-tab="pdf2docx">PDF → DOCX</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="tab-docx2pdf" data-tab="docx2pdf">DOCX → PDF</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="tab-imgs2pdf" data-tab="imgs2pdf">Images → PDF</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="tab-txt2pdf" data-tab="txt2pdf">Text → PDF</button>
+        </div>
+
+        <div class="tab-panels">
+          <div class="panel-tab active" id="tab-pdf2docx" role="tabpanel">
+            <label class="file-row">
+              <input type="file" id="pdf2docx" accept="application/pdf" />
+              <span>Choose PDF…</span>
+            </label>
+            <button id="btn-pdf2docx" class="btn" type="button">Convert</button>
+          </div>
+
+          <div class="panel-tab" id="tab-docx2pdf" role="tabpanel" hidden>
+            <label class="file-row">
+              <input type="file" id="docx2pdf" accept=".docx" />
+              <span>Choose DOCX…</span>
+            </label>
+            <button id="btn-docx2pdf" class="btn" type="button">Convert</button>
+          </div>
+
+          <div class="panel-tab" id="tab-imgs2pdf" role="tabpanel" hidden>
+            <label class="file-row">
+              <input type="file" id="imgs2pdf" accept="image/*" multiple />
+              <span>Choose images…</span>
+            </label>
+            <button id="btn-imgs2pdf" class="btn" type="button">Convert</button>
+          </div>
+
+          <div class="panel-tab" id="tab-txt2pdf" role="tabpanel" hidden>
+            <textarea id="txt2pdf" class="input" rows="6" placeholder="Paste text to export as PDF" autocomplete="off"></textarea>
+            <button id="btn-txt2pdf" class="btn" type="button">Export</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Rich message template used by app.js -->
+  <template id="msg-template">
+    <div class="msg">
+      <div class="bubble">
+        <div class="bubble-top">
+          <div class="author">
+            <div class="avatar" aria-hidden="true"></div>
+            <span class="who"></span>
+          </div>
+          <div class="tools">
+            <button class="copy btn xs ghost" type="button" title="Copy">Copy</button>
+          </div>
+        </div>
+        <div class="content markdown"></div>
+        <div class="meta">
+          <span class="time"></span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
